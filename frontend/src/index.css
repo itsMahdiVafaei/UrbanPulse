@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* تعریف تم و فونت به روش نسخه ۴ */
+@theme {
+  --font-sans: "Vazir", ui-sans-serif, system-ui;
+
+  /* رنگ‌های اختصاصی برای نبض شهر */
+  --color-primary: #1e40af;
+  --color-secondary: #0ea5e9;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+}
+
+/* فونت فیس خودت را اینجا بذار */
+@font-face {
+  font-family: 'Vazir';
+  src: url('./assets/fonts/Vazir.woff2') format('woff2');
+}
+
+@layer base {
+  body {
+    @apply font-sans;
+    direction: rtl;
+  }
+}
