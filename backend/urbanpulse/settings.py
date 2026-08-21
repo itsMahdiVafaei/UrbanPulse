@@ -9,6 +9,7 @@ DEBUG = False  # برای حالت آنلاین حتما False باشد
 
 # اینجا آدرس Render خودت را وارد کن. علامت '*' اجازه می‌دهد از هر آدرسی وصل شوی (برای دمو راحت‌تر است)
 ALLOWED_HOSTS = ['urban-pulse-api.onrender.com', 'localhost', '127.0.0.1', '*']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- اپلیکیشن‌ها (اصلاح شد که تکراری نباشد) ---
 INSTALLED_APPS = [
