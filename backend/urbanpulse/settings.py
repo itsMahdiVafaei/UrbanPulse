@@ -7,11 +7,10 @@ SECRET_KEY = 'change-me-in-production'
 # --- تنظیمات حساس ---
 DEBUG = False  # برای حالت آنلاین حتما False باشد
 
-# اینجا آدرس Render خودت را وارد کن. علامت '*' اجازه می‌دهد از هر آدرسی وصل شوی (برای دمو راحت‌تر است)
 ALLOWED_HOSTS = ['urban-pulse-api.onrender.com', 'localhost', '127.0.0.1', '*']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# --- اپلیکیشن‌ها (اصلاح شد که تکراری نباشد) ---
+# --- اپلیکیشن‌ها ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -19,17 +18,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',  # فقط یک بار باشد
+    'cloudinary_storage',   # <-- جدید: باید قبل از staticfiles کار نمی‌کنه، پس همینجا کافیه
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'core',
+    'cloudinary',           # <-- جدید
 ]
 
-# --- میدل‌ورها (CORS باید اولین خط باشد) ---
+# --- میدل‌ورها ---
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # برای نمایش استایل‌ها در رندر (نیاز به نصب whitenoise دارد)
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,6 +74,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# --- ذخیره‌سازی دائمی عکس‌ها روی Cloudinary ---
+if os.environ.get('CLOUDINARY_URL'):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'core.User'
 
@@ -83,7 +88,6 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    # برای دمو موقتا دسترسی را باز می‌گذاریم یا طبق نیاز تنظیم کن
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ]
