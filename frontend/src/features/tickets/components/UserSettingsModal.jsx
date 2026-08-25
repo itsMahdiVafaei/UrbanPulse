@@ -4,7 +4,7 @@ import { updateUserProfile } from '../../auth/authSlice';
 import { updateCitizenProfile } from '../../admin/adminSlice';
 import { X, User, Lock, Save, AlertCircle } from 'lucide-react';
 import Input from '../../../components/ui/Input';
-import api from '../../../services/api'; // اضافه کردن فایل ارتباط با سرور
+import api from '../../../services/api';
 
 export default function UserSettingsModal({ user, onClose }) {
     const dispatch = useDispatch();
@@ -42,18 +42,17 @@ export default function UserSettingsModal({ user, onClose }) {
         if (validate()) {
             setLoading(true);
             try {
-                // ۱. ارسال اطلاعات به سرور بک‌اند (برای ذخیره در دیتابیس و پنل ادمین)
                 const payload = {
                     name: formData.name,
                     email: formData.email,
                 };
 
-                // اگر پسورد جدید وارد شده بود، آن را هم بفرست
                 if (formData.newPassword) {
                     payload.password = formData.newPassword;
                 }
 
-                await api.put('profile/update/', payload);
+                // اصلاح اسلش اول برای جلوگیری از خطای 404
+                await api.put('/profile/update/', payload);
 
                 const updatedData = {
                     name: formData.name,
@@ -61,7 +60,6 @@ export default function UserSettingsModal({ user, onClose }) {
                     phone: formData.phone
                 };
 
-                // ۲. به‌روزرسانی ریداکس
                 dispatch(updateUserProfile(updatedData));
                 dispatch(updateCitizenProfile(updatedData));
 
@@ -69,7 +67,7 @@ export default function UserSettingsModal({ user, onClose }) {
                 onClose();
             } catch (err) {
                 console.error(err);
-                alert(err.response?.data?.detail || "خطایی در ارتباط با سرور رخ داد.");
+                alert(err.message || "خطایی در ارتباط با سرور رخ داد.");
             } finally {
                 setLoading(false);
             }
@@ -162,7 +160,7 @@ export default function UserSettingsModal({ user, onClose }) {
                                     label="تکرار رمز عبور جدید"
                                     type="password"
                                     placeholder="******"
-                                    value={formData.confirmComponent || formData.confirmPassword}
+                                    value={formData.confirmPassword}
                                     onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
                                 />
                                 {errors.confirmPassword && <ErrorText msg={errors.confirmPassword} />}

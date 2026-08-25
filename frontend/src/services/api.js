@@ -34,6 +34,7 @@ export const getContractors = () => apiCall('/contractors/');
 export const createContractorApi = (data) => apiCall('/contractors/', { method: 'POST', body: JSON.stringify(data) });
 export const updateContractorApi = (data) => apiCall(`/contractors/${data.id}/`, { method: 'PATCH', body: JSON.stringify(data) });
 export const deleteContractorApi = (id) => apiCall(`/contractors/${id}/`, { method: 'DELETE' });
+export const updateProfileApi = (data) => api.put('/profile/update/', data);
 
 
 // --- Default Export (شیء پیش‌فرض برای رفع خطای ورسل و پشتیبانی از api.put / api.get) ---
