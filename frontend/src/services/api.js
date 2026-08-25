@@ -18,22 +18,32 @@ async function apiCall(path, options = {}) {
     return res.json();
 }
 
-// --- Auth ---
+// --- Named Exports (توابع نام‌گذاری شده برای سازگاری کامل) ---
 export const login = (username, password) => apiCall('/auth/token/', { method: 'POST', body: JSON.stringify({ username, password }) });
 export const register = (data) => apiCall('/register/register/', { method: 'POST', body: JSON.stringify(data) });
 
-// --- Requests (tickets) ---
 export const getRequests = () => apiCall('/requests/');
 export const getRequestByTrackingCode = (code) => apiCall(`/requests/?tracking_code=${encodeURIComponent(code)}`);
 export const createRequest = (formData) => apiCall('/requests/', { method: 'POST', body: formData });
 export const changeRequestStatus = (id, payload) => apiCall(`/requests/${id}/change_status/`, { method: 'POST', body: JSON.stringify(payload) });
 
-// --- Citizens ---
 export const getCitizens = () => apiCall('/citizens/');
 export const toggleCitizenStatusApi = (phone) => apiCall('/citizens/toggle_status/', { method: 'POST', body: JSON.stringify({ phone }) });
 
-// --- Contractors ---
 export const getContractors = () => apiCall('/contractors/');
 export const createContractorApi = (data) => apiCall('/contractors/', { method: 'POST', body: JSON.stringify(data) });
 export const updateContractorApi = (data) => apiCall(`/contractors/${data.id}/`, { method: 'PATCH', body: JSON.stringify(data) });
 export const deleteContractorApi = (id) => apiCall(`/contractors/${id}/`, { method: 'DELETE' });
+
+
+// --- Default Export (شیء پیش‌فرض برای رفع خطای ورسل و پشتیبانی از api.put / api.get) ---
+const api = {
+    get: (path, options) => apiCall(path, { method: 'GET', ...options }),
+    post: (path, body, options) => apiCall(path, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body), ...options }),
+    put: (path, body, options) => apiCall(path, { method: 'PUT', body: JSON.stringify(body), ...options }),
+    patch: (path, body, options) => apiCall(path, { method: 'PATCH', body: JSON.stringify(body), ...options }),
+    delete: (path, options) => apiCall(path, { method: 'DELETE', ...options }),
+    call: apiCall,
+};
+
+export default api;
