@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Save, Mail } from 'lucide-react';
+import { X, UserPlus, Save } from 'lucide-react';
 import Input from '../../../components/ui/Input';
 
 const SKILLS = [
@@ -17,7 +17,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         headName: '',
         nationalCode: '',
         phone: '',
-        email: '', // فیلد ایمیل در استیت
+        email: '',
         password: '',
         category: '',
         memberCount: 1,
@@ -29,7 +29,17 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
 
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData);
+            setFormData({
+                headName: initialData.headName || initialData.first_name || '',
+                nationalCode: initialData.nationalCode || initialData.national_code || '',
+                phone: initialData.phone || '',
+                email: initialData.email || '',
+                password: '', // پسورد خالی می‌ماند تا اگر نیاز به تغییر نبود عوض نشود
+                category: initialData.category || '',
+                memberCount: initialData.memberCount || initialData.member_count || 1,
+                status: initialData.status || 'FREE',
+                members: initialData.members || []
+            });
         }
     }, [initialData]);
 
@@ -56,7 +66,6 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         if (!/^\d{10}$/.test(formData.nationalCode)) e.nationalCode = "کد ملی باید ۱۰ رقم عدد باشد";
         if (!/^09\d{9}$/.test(formData.phone)) e.phone = "شماره همراه معتبر نیست";
 
-        // اعتبارسنجی ایمیل (اجباری)
         if (!formData.email) {
             e.email = "وارد کردن ایمیل الزامی است";
         } else if (!emailRegex.test(formData.email)) {
@@ -77,7 +86,22 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
     const handleSubmit = (e) => {
         e.preventDefault();
         if (validate()) {
-            onSave({ ...formData, id: initialData?.id || Date.now() });
+            const payload = {
+                id: initialData?.id,
+                headName: formData.headName,
+                first_name: formData.headName, // تطابق با فیلد جنگو
+                nationalCode: formData.nationalCode,
+                national_code: formData.nationalCode,
+                phone: formData.phone,
+                email: formData.email,
+                password: formData.password,
+                category: formData.category,
+                memberCount: formData.memberCount,
+                member_count: formData.memberCount,
+                status: formData.status,
+                members: formData.members
+            };
+            onSave(payload);
             onClose();
         }
     };
@@ -97,7 +121,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">UrbanPulse Management</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all cursor-pointer">
+                    <button type="button" onClick={onClose} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all cursor-pointer">
                         <X size={24}/>
                     </button>
                 </div>
@@ -145,12 +169,11 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                                 <Input
                                     label="رمز عبور پنل اکیپ"
                                     type="password"
-                                    placeholder="یک رمز برای اکیپ تعیین کنید"
+                                    placeholder="در صورت عدم تغییر خالی بگذارید"
                                     value={formData.password}
                                     onChange={e => setFormData({...formData, password: e.target.value})}
                                 />
                             </div>
-                            {/* فیلد ایمیل جدید */}
                             <div>
                                 <Input
                                     label="پست الکترونیک (ایمیل)"
