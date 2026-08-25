@@ -86,23 +86,43 @@ class ContractorSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password', None) or validated_data.get('phone')
         validated_data.pop('contractor_status', None)
-        user = User(username=validated_data['phone'], role='contractor',
-                    first_name=validated_data.get('first_name', ''),
-                    national_code=validated_data.get('national_code', ''),
-                    email=validated_data.get('email', ''),
-                    phone=validated_data['phone'],
-                    category=validated_data.get('category', ''),
-                    member_count=validated_data.get('member_count', 1))
+
+        user = User(
+            username=validated_data['phone'],
+            role='contractor',
+            first_name=validated_data.get('first_name', ''),
+            national_code=validated_data.get('national_code', ''),
+            email=validated_data.get('email', ''),
+            phone=validated_data['phone'],
+            category=validated_data.get('category', ''),
+            member_count=validated_data.get('member_count', 1)
+        )
         user.set_password(password)
         user.save()
         return user
 
     def update(self, instance, validated_data):
+        # استخراج رمز عبور (در صورت ارسال)
         password = validated_data.pop('password', None)
+
+        # مدیریت فیلدهای خاص در صورت ارسال از فرانت‌اند
+        if 'first_name' in validated_data:
+            instance.first_name = validated_data.pop('first_name')
+        if 'national_code' in validated_data:
+            instance.national_code = validated_data.pop('national_code')
+        if 'member_count' in validated_data:
+            instance.member_count = validated_data.pop('member_count')
+        if 'contractor_status' in validated_data:
+            instance.contractor_status = validated_data.pop('contractor_status')
+
+        # آپدیت بقیه فیلدهای استاندارد
         for k, v in validated_data.items():
             setattr(instance, k, v)
-        if password:
+
+        # اگر رمز عبور جدید ارسال شده بود، حتماً با متد امن جنگو هش و ذخیره شود
+        if password and password.strip():
             instance.set_password(password)
+
         instance.save()
         return instance
 

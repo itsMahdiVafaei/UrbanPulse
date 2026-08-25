@@ -12,6 +12,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User, Request, RequestImage, RequestStatusHistory, Feedback
 from .serializers import RegisterSerializer, RequestSerializer, CitizenSerializer, ContractorSerializer, FeedbackSerializer
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -124,6 +126,38 @@ class RequestViewSet(viewsets.ModelViewSet):
         RequestStatusHistory.objects.create(request=obj, status=new_status, comment=request.data.get('adminComment', ''), changed_by=u)
         return Response(self.get_serializer(obj, context={'request': request}).data)
 
+    @action(detail=True, methods=['post'])
+    def submit_feedback(self, request, pk=None):
+        """ثبت امتیاز و نظر توسط شهروند پس از اتمام درخواست"""
+        obj = self.get_object()
+        u = request.user
+
+        # بررسی اینکه آیا درخواست متعلق به همین شهروند است یا خیر
+        if u.role != 'citizen' or obj.citizen_id != u.id:
+            return Response({'detail': 'شما مجاز به ثبت نظر برای این درخواست نیستید.'}, status=403)
+
+        # بررسی اینکه حتما وضعیت درخواست روی حالت انجام شده باشد
+        if obj.status != 'COMPLETED':
+            return Response({'detail': 'تنها برای درخواست‌های انجام‌شده می‌توان نظر ثبت کرد.'}, status=400)
+
+        rating = request.data.get('rating')
+        comment = request.data.get('comment', '')
+
+        try:
+            rating = int(rating)
+            if not (1 <= rating <= 5):
+                raise ValueError()
+        except (TypeError, ValueError):
+            return Response({'detail': 'امتیاز باید عددی بین ۱ تا ۵ باشد.'}, status=400)
+
+        # ایجاد یا ویرایش فیدبک برای این درخواست
+        feedback, created = Feedback.objects.update_or_create(
+            request=obj,
+            defaults={'rating': rating, 'comment': comment}
+        )
+
+        return Response(FeedbackSerializer(feedback).data, status=201 if created else 200)
+
     @action(detail=False, methods=['get'], permission_classes=[IsStaff])
     def dashboard(self, request):
         today = now().date()
@@ -169,6 +203,36 @@ class ContractorViewSet(viewsets.ModelViewSet):
 class FeedbackViewSet(viewsets.ModelViewSet):
     queryset = Feedback.objects.all()
     serializer_class = FeedbackSerializer
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        data = request.data
+
+        # ۱. آپدیت نام (اگر فرانت‌اند اسم رو یکپارچه می‌فرسته)
+        if 'name' in data:
+            name_parts = data['name'].split(' ', 1)
+            user.first_name = name_parts[0]
+            user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        # اگر فرانت‌اند اسم و فامیل رو جدا می‌فرسته:
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+
+        # ۲. آپدیت رمز عبور به صورت اصولی (هش شده)
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+
+        user.save()
+
+        return Response({
+            'detail': 'اطلاعات شما با موفقیت بروزرسانی شد.',
+            'name': f"{user.first_name} {user.last_name}".strip()
+        }, status=http_status.HTTP_200_OK)
 
     def get_queryset(self):
         return super().get_queryset().filter(request__citizen=self.request.user)
