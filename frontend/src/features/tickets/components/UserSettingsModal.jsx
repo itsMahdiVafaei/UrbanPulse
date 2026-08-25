@@ -2,24 +2,24 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateUserProfile } from '../../auth/authSlice';
 import { updateCitizenProfile } from '../../admin/adminSlice';
-import { X, User, Mail, Phone, Lock, Save, AlertCircle } from 'lucide-react';
+import { X, User, Lock, Save, AlertCircle } from 'lucide-react';
 import Input from '../../../components/ui/Input';
+import api from '../../../services/api'; // اضافه کردن فایل ارتباط با سرور
 
 export default function UserSettingsModal({ user, onClose }) {
     const dispatch = useDispatch();
 
-    // مقداردهی اولیه دقیق بر اساس دیتای موجود در ریداکس
     const [formData, setFormData] = useState({
-        name: user?.name || '',          // نام و نام خانوادگی
-        email: user?.email || '',        // پست الکترونیک
-        phone: user?.phone || user?.identifier || '',   // شماره تماس (شناسه اصلی)
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || user?.identifier || '',
         newPassword: '',
         confirmPassword: ''
     });
 
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
-    // تابع اعتبارسنجی فول مهندسی
     const validate = () => {
         let e = {};
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,24 +36,43 @@ export default function UserSettingsModal({ user, onClose }) {
         return Object.keys(e).length === 0;
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
         if (validate()) {
-            const updatedData = {
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone // شماره همراه به عنوان کلید یکتا ثابت می‌ماند
-            };
+            setLoading(true);
+            try {
+                // ۱. ارسال اطلاعات به سرور بک‌اند (برای ذخیره در دیتابیس و پنل ادمین)
+                const payload = {
+                    name: formData.name,
+                    email: formData.email,
+                };
 
-            // ۱. به‌روزرسانی اطلاعات پروفایل جاری (برای هدر و سایدبار)
-            dispatch(updateUserProfile(updatedData));
+                // اگر پسورد جدید وارد شده بود، آن را هم بفرست
+                if (formData.newPassword) {
+                    payload.password = formData.newPassword;
+                }
 
-            // ۲. به‌روزرسانی اطلاعات در لیست کل شهروندان (برای پنل ادمین)
-            dispatch(updateCitizenProfile(updatedData));
+                await api.put('profile/update/', payload);
 
-            alert("تغییرات با موفقیت در پروفایل و سوابق سیستمی شما ثبت شد.");
-            onClose(); // بستن مودال بعد از موفقیت
+                const updatedData = {
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone
+                };
+
+                // ۲. به‌روزرسانی ریداکس
+                dispatch(updateUserProfile(updatedData));
+                dispatch(updateCitizenProfile(updatedData));
+
+                alert("تغییرات با موفقیت در دیتابیس و حساب کاربری شما ثبت شد.");
+                onClose();
+            } catch (err) {
+                console.error(err);
+                alert(err.response?.data?.detail || "خطایی در ارتباط با سرور رخ داد.");
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -83,7 +102,6 @@ export default function UserSettingsModal({ user, onClose }) {
 
                 <form onSubmit={handleSave} className="p-10 space-y-6 text-right" dir="rtl">
 
-                    {/* بخش اطلاعات هویتی */}
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-1">
@@ -122,7 +140,6 @@ export default function UserSettingsModal({ user, onClose }) {
                         </div>
                     </div>
 
-                    {/* بخش امنیت و رمز عبور */}
                     <div className="space-y-4 pt-6 border-t border-slate-50">
                         <div className="flex items-center gap-2 mb-2">
                             <Lock size={14} className="text-indigo-500" />
@@ -145,7 +162,7 @@ export default function UserSettingsModal({ user, onClose }) {
                                     label="تکرار رمز عبور جدید"
                                     type="password"
                                     placeholder="******"
-                                    value={formData.confirmPassword}
+                                    value={formData.confirmComponent || formData.confirmPassword}
                                     onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
                                 />
                                 {errors.confirmPassword && <ErrorText msg={errors.confirmPassword} />}
@@ -153,7 +170,6 @@ export default function UserSettingsModal({ user, onClose }) {
                         </div>
                     </div>
 
-                    {/* دکمه‌های عملیاتی */}
                     <div className="flex gap-4 pt-6">
                         <button
                             type="button"
@@ -164,9 +180,10 @@ export default function UserSettingsModal({ user, onClose }) {
                         </button>
                         <button
                             type="submit"
+                            disabled={loading}
                             className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <Save size={20}/> ذخیره و به‌روزرسانی نهایی
+                            <Save size={20}/> {loading ? 'در حال ذخیره‌سازی...' : 'ذخیره و به‌روزرسانی نهایی'}
                         </button>
                     </div>
                 </form>
@@ -175,7 +192,6 @@ export default function UserSettingsModal({ user, onClose }) {
     );
 }
 
-// کامپوننت کوچک نمایش خطا
 const ErrorText = ({ msg }) => (
     <div className="flex items-center gap-1 text-red-500 text-[10px] font-bold pr-2 mt-1 animate-in fade-in slide-in-from-right-1">
         <AlertCircle size={10} />
