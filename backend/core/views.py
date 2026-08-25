@@ -199,6 +199,60 @@ class ContractorViewSet(viewsets.ModelViewSet):
     serializer_class = ContractorSerializer
     permission_classes = [IsStaff]
 
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        phone = data.get('phone') or data.get('username')
+
+        if not phone:
+            return Response({'detail': 'شماره تماس الزامی است.'}, status=400)
+
+        if User.objects.filter(username=phone).exists():
+            return Response({'detail': 'این شماره قبلاً ثبت شده است.'}, status=400)
+
+        # ساخت کاربر با نقش پیمانکار
+        user = User.objects.create_user(
+            username=phone,
+            phone=phone,
+            password=data.get('password') or '12345678', # پسورد پیش‌فرض در صورت خالی بودن
+            role='contractor',
+            first_name=data.get('headName') or data.get('first_name', ''),
+            email=data.get('email', ''),
+            national_code=data.get('nationalCode') or data.get('national_code', ''),
+            category=data.get('category', ''),
+            member_count=data.get('memberCount') or data.get('member_count', 1),
+            contractor_status=data.get('status', 'FREE')
+        )
+        return Response(ContractorSerializer(user, context={'request': request}).data, status=201)
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        data = request.data
+
+        # آپدیت فیلدها با پشتیبانی از هر دو نام‌گذاری (فرانت و بک)
+        if 'headName' in data or 'first_name' in data:
+            user.first_name = data.get('headName') or data.get('first_name')
+        if 'phone' in data:
+            user.phone = data.get('phone')
+            user.username = data.get('phone')
+        if 'email' in data:
+            user.email = data.get('email')
+        if 'nationalCode' in data or 'national_code' in data:
+            user.national_code = data.get('nationalCode') or data.get('national_code')
+        if 'category' in data:
+            user.category = data.get('category')
+        if 'memberCount' in data or 'member_count' in data:
+            user.member_count = data.get('memberCount') or data.get('member_count')
+        if 'status' in data:
+            user.contractor_status = data.get('status')
+
+        # آپدیت رمز عبور فقط در صورتی که مقدار جدیدی وارد شده باشد
+        password = data.get('password')
+        if password and password.strip():
+            user.set_password(password)
+
+        user.save()
+        return Response(ContractorSerializer(user, context={'request': request}).data, status=200)
+
 
 class FeedbackViewSet(viewsets.ModelViewSet):
     queryset = Feedback.objects.all()

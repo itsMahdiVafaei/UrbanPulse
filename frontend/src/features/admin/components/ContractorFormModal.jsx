@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Save } from 'lucide-react';
 import Input from '../../../components/ui/Input';
-import api from '../../../services/api'; // اضافه کردن ارتباط با سرور
+import { createContractorApi, updateContractorApi } from '../../../services/api';
 
 const SKILLS = [
     "اکیپ آسفالت و لکه‌گیری",
@@ -86,6 +86,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
             setLoading(true);
             try {
                 const payload = {
+                    id: initialData?.id,
                     headName: formData.headName,
                     first_name: formData.headName,
                     nationalCode: formData.nationalCode,
@@ -99,26 +100,24 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                     members: formData.members
                 };
 
-                // اگر پسورد وارد شده بود به پِی‌لود اضافه شود
                 if (formData.password && formData.password.trim() !== '') {
                     payload.password = formData.password;
                 }
 
                 let response;
                 if (initialData?.id) {
-                    // ویرایش پیمانکار موجود در سرور
-                    response = await api.put(`contractors/${initialData.id}/`, payload);
+                    // استفاده از تابع استانداردِ تعریف شده در api.js
+                    response = await updateContractorApi(payload);
                 } else {
-                    // ساخت پیمانکار جدید
-                    response = await api.post('contractors/', payload);
+                    response = await createContractorApi(payload);
                 }
 
-                if (onSave) onSave(response.data);
+                if (onSave) onSave(response);
                 alert('اطلاعات اکیپ با موفقیت در دیتابیس ثبت شد.');
                 onClose();
             } catch (err) {
                 console.error(err);
-                alert(err.response?.data?.detail || 'خطایی در ارتباط با سرور رخ داد.');
+                alert(err.message || 'خطایی در ارتباط با سرور رخ داد.');
             } finally {
                 setLoading(false);
             }
