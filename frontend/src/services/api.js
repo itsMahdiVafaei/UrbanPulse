@@ -39,11 +39,11 @@ export const updateProfileApi = (data) => api.put('/profile/update/', data);
 
 // --- Default Export (شیء پیش‌فرض برای رفع خطای ورسل و پشتیبانی از api.put / api.get) ---
 const api = {
-    get: (path, options) => apiCall(path, { method: 'GET', ...options }),
-    post: (path, body, options) => apiCall(path, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body), ...options }),
-    put: (path, body, options) => apiCall(path, { method: 'PUT', body: JSON.stringify(body), ...options }),
-    patch: (path, body, options) => apiCall(path, { method: 'PATCH', body: JSON.stringify(body), ...options }),
-    delete: (path, options) => apiCall(path, { method: 'DELETE', ...options }),
+    get: (path, options) => apiCall(path.startsWith('/') ? path : `/${path}`, { method: 'GET', ...options }),
+    post: (path, body, options) => apiCall(path.startsWith('/') ? path : `/${path}`, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body), ...options }),
+    put: (path, body, options) => apiCall(path.startsWith('/') ? path : `/${path}`, { method: 'PUT', body: JSON.stringify(body), ...options }),
+    patch: (path, body, options) => apiCall(path.startsWith('/') ? path : `/${path}`, { method: 'PATCH', body: JSON.stringify(body), ...options }),
+    delete: (path, options) => apiCall(path.startsWith('/') ? path : `/${path}`, { method: 'DELETE', ...options }),
     call: apiCall,
 };
 
