@@ -103,7 +103,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                 if (formData.password && formData.password.trim() !== '') {
                     payload.password = formData.password;
                 }
-
+                console.log('Payload being sent to server:', payload);
                 let response;
                 if (initialData?.id) {
                     // استفاده از تابع استانداردِ تعریف شده در api.js
