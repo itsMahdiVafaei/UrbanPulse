@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Save } from 'lucide-react';
 import Input from '../../../components/ui/Input';
+import api from '../../../services/api'; // اضافه کردن ارتباط با سرور
 
 const SKILLS = [
     "اکیپ آسفالت و لکه‌گیری",
@@ -26,6 +27,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
     });
 
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -34,7 +36,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                 nationalCode: initialData.nationalCode || initialData.national_code || '',
                 phone: initialData.phone || '',
                 email: initialData.email || '',
-                password: '', // پسورد خالی می‌ماند تا اگر نیاز به تغییر نبود عوض نشود
+                password: '',
                 category: initialData.category || '',
                 memberCount: initialData.memberCount || initialData.member_count || 1,
                 status: initialData.status || 'FREE',
@@ -74,35 +76,52 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
 
         if (!formData.category) e.category = "رسته مهارتی را انتخاب کنید";
 
-        formData.members.forEach((m, i) => {
-            if (!m.name) e[`m_name_${i}`] = "نام عضو الزامی است";
-            if (!/^\d{10}$/.test(m.nationalCode)) e[`m_code_${i}`] = "کد ملی ۱۰ رقمی الزامی است";
-        });
-
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (validate()) {
-            const payload = {
-                id: initialData?.id,
-                headName: formData.headName,
-                first_name: formData.headName, // تطابق با فیلد جنگو
-                nationalCode: formData.nationalCode,
-                national_code: formData.nationalCode,
-                phone: formData.phone,
-                email: formData.email,
-                password: formData.password,
-                category: formData.category,
-                memberCount: formData.memberCount,
-                member_count: formData.memberCount,
-                status: formData.status,
-                members: formData.members
-            };
-            onSave(payload);
-            onClose();
+            setLoading(true);
+            try {
+                const payload = {
+                    headName: formData.headName,
+                    first_name: formData.headName,
+                    nationalCode: formData.nationalCode,
+                    national_code: formData.nationalCode,
+                    phone: formData.phone,
+                    email: formData.email,
+                    category: formData.category,
+                    memberCount: formData.memberCount,
+                    member_count: formData.memberCount,
+                    status: formData.status,
+                    members: formData.members
+                };
+
+                // اگر پسورد وارد شده بود به پِی‌لود اضافه شود
+                if (formData.password && formData.password.trim() !== '') {
+                    payload.password = formData.password;
+                }
+
+                let response;
+                if (initialData?.id) {
+                    // ویرایش پیمانکار موجود در سرور
+                    response = await api.put(`contractors/${initialData.id}/`, payload);
+                } else {
+                    // ساخت پیمانکار جدید
+                    response = await api.post('contractors/', payload);
+                }
+
+                if (onSave) onSave(response.data);
+                alert('اطلاعات اکیپ با موفقیت در دیتابیس ثبت شد.');
+                onClose();
+            } catch (err) {
+                console.error(err);
+                alert(err.response?.data?.detail || 'خطایی در ارتباط با سرور رخ داد.');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -110,7 +129,6 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto">
 
-                {/* Header */}
                 <div className="px-10 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div className="flex items-center gap-3">
                         <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-lg">
@@ -128,7 +146,6 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
 
                 <form onSubmit={handleSubmit} className="p-10 space-y-8 text-right" dir="rtl">
 
-                    {/* بخش اول: اطلاعات سرپرست و تماس */}
                     <div className="space-y-6">
                         <h3 className="text-sm font-black text-indigo-600 flex items-center gap-2">
                             <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
@@ -212,7 +229,6 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                         </div>
                     </div>
 
-                    {/* بخش دوم: اعضای تیم */}
                     <div className="space-y-6 border-t border-slate-50 pt-8">
                         <h3 className="text-sm font-black text-indigo-600 flex items-center gap-2">
                             <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
@@ -235,7 +251,6 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                                                     setFormData({...formData, members: m});
                                                 }}
                                             />
-                                            {errors[`m_name_${idx}`] && <p className="text-[9px] text-red-500 font-bold mt-1 pr-2">{errors[`m_name_${idx}`]}</p>}
                                         </div>
                                         <div>
                                             <Input
@@ -247,7 +262,6 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                                                     setFormData({...formData, members: m});
                                                 }}
                                             />
-                                            {errors[`m_code_${idx}`] && <p className="text-[9px] text-red-500 font-bold mt-1 pr-2">{errors[`m_code_${idx}`]}</p>}
                                         </div>
                                     </div>
                                 ))}
@@ -259,14 +273,13 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                         )}
                     </div>
 
-                    {/* Footer Buttons */}
                     <div className="flex gap-4 pt-6">
                         <button type="button" onClick={onClose} className="flex-1 py-4 text-sm font-bold text-slate-400 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer">
                             انصراف
                         </button>
-                        <button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                        <button type="submit" disabled={loading} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
                             <Save size={20}/>
-                            {initialData ? 'ذخیره تغییرات نهایی' : 'تایید و ثبت اکیپ در سیستم'}
+                            {loading ? 'در حال ارسال به سرور...' : (initialData ? 'ذخیره تغییرات نهایی' : 'تایید و ثبت اکیپ در سیستم')}
                         </button>
                     </div>
                 </form>
