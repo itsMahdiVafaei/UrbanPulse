@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Save } from 'lucide-react';
+import { X, UserPlus, Save, Mail } from 'lucide-react';
 import Input from '../../../components/ui/Input';
-import { createContractorApi, updateContractorApi } from '../../../services/api';
 
 const SKILLS = [
     "اکیپ آسفالت و لکه‌گیری",
@@ -18,7 +17,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         headName: '',
         nationalCode: '',
         phone: '',
-        email: '',
+        email: '', // فیلد ایمیل در استیت
         password: '',
         category: '',
         memberCount: 1,
@@ -27,21 +26,10 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
     });
 
     const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
-            setFormData({
-                headName: initialData.headName || initialData.first_name || '',
-                nationalCode: initialData.nationalCode || initialData.national_code || '',
-                phone: initialData.phone || '',
-                email: initialData.email || '',
-                password: '',
-                category: initialData.category || '',
-                memberCount: initialData.memberCount || initialData.member_count || 1,
-                status: initialData.status || 'FREE',
-                members: initialData.members || []
-            });
+            setFormData(initialData);
         }
     }, [initialData]);
 
@@ -68,6 +56,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         if (!/^\d{10}$/.test(formData.nationalCode)) e.nationalCode = "کد ملی باید ۱۰ رقم عدد باشد";
         if (!/^09\d{9}$/.test(formData.phone)) e.phone = "شماره همراه معتبر نیست";
 
+        // اعتبارسنجی ایمیل (اجباری)
         if (!formData.email) {
             e.email = "وارد کردن ایمیل الزامی است";
         } else if (!emailRegex.test(formData.email)) {
@@ -76,51 +65,20 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
 
         if (!formData.category) e.category = "رسته مهارتی را انتخاب کنید";
 
+        formData.members.forEach((m, i) => {
+            if (!m.name) e[`m_name_${i}`] = "نام عضو الزامی است";
+            if (!/^\d{10}$/.test(m.nationalCode)) e[`m_code_${i}`] = "کد ملی ۱۰ رقمی الزامی است";
+        });
+
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (validate()) {
-            setLoading(true);
-            try {
-                const payload = {
-                    id: initialData?.id,
-                    headName: formData.headName,
-                    first_name: formData.headName,
-                    nationalCode: formData.nationalCode,
-                    national_code: formData.nationalCode,
-                    phone: formData.phone,
-                    email: formData.email,
-                    category: formData.category,
-                    memberCount: formData.memberCount,
-                    member_count: formData.memberCount,
-                    status: formData.status,
-                    members: formData.members
-                };
-
-                if (formData.password && formData.password.trim() !== '') {
-                    payload.password = formData.password;
-                }
-                console.log('Payload being sent to server:', payload);
-                let response;
-                if (initialData?.id) {
-                    // استفاده از تابع استانداردِ تعریف شده در api.js
-                    response = await updateContractorApi(payload);
-                } else {
-                    response = await createContractorApi(payload);
-                }
-
-                if (onSave) onSave(response);
-                alert('اطلاعات اکیپ با موفقیت در دیتابیس ثبت شد.');
-                onClose();
-            } catch (err) {
-                console.error(err);
-                alert(err.message || 'خطایی در ارتباط با سرور رخ داد.');
-            } finally {
-                setLoading(false);
-            }
+            onSave({ ...formData, id: initialData?.id || Date.now() });
+            onClose();
         }
     };
 
@@ -128,6 +86,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto">
 
+                {/* Header */}
                 <div className="px-10 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div className="flex items-center gap-3">
                         <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-lg">
@@ -138,13 +97,14 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">UrbanPulse Management</p>
                         </div>
                     </div>
-                    <button type="button" onClick={onClose} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all cursor-pointer">
+                    <button onClick={onClose} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all cursor-pointer">
                         <X size={24}/>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-10 space-y-8 text-right" dir="rtl">
 
+                    {/* بخش اول: اطلاعات سرپرست و تماس */}
                     <div className="space-y-6">
                         <h3 className="text-sm font-black text-indigo-600 flex items-center gap-2">
                             <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
@@ -185,11 +145,12 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                                 <Input
                                     label="رمز عبور پنل اکیپ"
                                     type="password"
-                                    placeholder="در صورت عدم تغییر خالی بگذارید"
+                                    placeholder="یک رمز برای اکیپ تعیین کنید"
                                     value={formData.password}
                                     onChange={e => setFormData({...formData, password: e.target.value})}
                                 />
                             </div>
+                            {/* فیلد ایمیل جدید */}
                             <div>
                                 <Input
                                     label="پست الکترونیک (ایمیل)"
@@ -228,6 +189,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                         </div>
                     </div>
 
+                    {/* بخش دوم: اعضای تیم */}
                     <div className="space-y-6 border-t border-slate-50 pt-8">
                         <h3 className="text-sm font-black text-indigo-600 flex items-center gap-2">
                             <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
@@ -250,6 +212,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                                                     setFormData({...formData, members: m});
                                                 }}
                                             />
+                                            {errors[`m_name_${idx}`] && <p className="text-[9px] text-red-500 font-bold mt-1 pr-2">{errors[`m_name_${idx}`]}</p>}
                                         </div>
                                         <div>
                                             <Input
@@ -261,6 +224,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                                                     setFormData({...formData, members: m});
                                                 }}
                                             />
+                                            {errors[`m_code_${idx}`] && <p className="text-[9px] text-red-500 font-bold mt-1 pr-2">{errors[`m_code_${idx}`]}</p>}
                                         </div>
                                     </div>
                                 ))}
@@ -272,13 +236,14 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
                         )}
                     </div>
 
+                    {/* Footer Buttons */}
                     <div className="flex gap-4 pt-6">
                         <button type="button" onClick={onClose} className="flex-1 py-4 text-sm font-bold text-slate-400 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer">
                             انصراف
                         </button>
-                        <button type="submit" disabled={loading} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                        <button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
                             <Save size={20}/>
-                            {loading ? 'در حال ارسال به سرور...' : (initialData ? 'ذخیره تغییرات نهایی' : 'تایید و ثبت اکیپ در سیستم')}
+                            {initialData ? 'ذخیره تغییرات نهایی' : 'تایید و ثبت اکیپ در سیستم'}
                         </button>
                     </div>
                 </form>
