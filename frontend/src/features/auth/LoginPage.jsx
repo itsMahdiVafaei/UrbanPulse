@@ -130,7 +130,7 @@ function CitizenForm({ isRegister, formData, errors, updateField, captchaCode, g
                 <div className="inline-flex p-3 rounded-2xl mb-3 border bg-blue-50 text-blue-600 border-blue-100">
                     {isRegister ? <UserPlus size={28}/> : <User size={28}/>}
                 </div>
-                <h1 className="text-2xl font-black text-slate-800">{isRegister ? 'عضویت شهروند' : 'ورود شهر'}</h1>
+                <h1 className="text-2xl font-black text-slate-800">{isRegister ? 'عضویت شهروند' : 'ورود شهروند'}</h1>
             </div>
 
             {errors.general && (
@@ -158,7 +158,25 @@ function CitizenForm({ isRegister, formData, errors, updateField, captchaCode, g
                     <>
                         <Input label="شماره همراه" maxLength={11} value={formData.identifier} onChange={e => updateField('identifier', e.target.value.replace(/\D/g, ''))} />
                         {errors.identifier && <ErrorMsg msg={errors.identifier} />}
-                        <Input label="کلمه عبور" type="password" value={formData.password} onChange={e => updateField('password', e.target.value)} />
+
+                        {/* فیلد کلمه عبور به همراه دکمه فراموشی رمز */}
+                        <Input
+                            label={
+                                <div className="flex justify-between items-center w-full pr-1">
+                                    <span>کلمه عبور</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => alert('بخش بازیابی رمز عبور به زودی راه‌اندازی می‌شود.')}
+                                        className="text-[10px] text-blue-500 hover:text-blue-700 hover:underline cursor-pointer font-bold transition-all"
+                                    >
+                                        رمز خود را فراموش کرده‌اید؟
+                                    </button>
+                                </div>
+                            }
+                            type="password"
+                            value={formData.password}
+                            onChange={e => updateField('password', e.target.value)}
+                        />
                         {errors.password && <ErrorMsg msg={errors.password} />}
                     </>
                 )}
@@ -185,7 +203,7 @@ function OrgForm({ orgRole, setOrgRole, formData, updateField, errors, captchaCo
         <div className="flex flex-col h-full">
             <div className="text-center mb-6 shrink-0">
                 <div className="inline-flex p-3 rounded-2xl mb-3 border bg-indigo-50 text-indigo-600 border-indigo-100"><ShieldCheck size={28}/></div>
-                <h1 className="text-2xl font-black text-slate-800">ورود سازمان</h1>
+                <h1 className="text-2xl font-black text-slate-800">ورود اپراتور سازمان</h1>
             </div>
 
             {errors.general && <div className="mb-4 p-3 bg-red-50 text-red-600 text-[11px] font-bold rounded-xl text-center">{errors.general}</div>}
@@ -198,8 +216,27 @@ function OrgForm({ orgRole, setOrgRole, formData, updateField, errors, captchaCo
             <form onSubmit={handleAuth} className="space-y-4 flex-1">
                 <Input label="شناسه کاربری / شماره همراه" value={formData.identifier} onChange={e => updateField('identifier', e.target.value)} />
                 {errors.identifier && <ErrorMsg msg={errors.identifier} />}
-                <Input label="رمز عبور مدیریتی" type="password" value={formData.password} onChange={e => updateField('password', e.target.value)} />
+
+                {/* فیلد رمز عبور مدیریتی با دکمه فراموشی */}
+                <Input
+                    label={
+                        <div className="flex justify-between items-center w-full pr-1">
+                            <span>رمز عبور مدیریتی</span>
+                            <button
+                                type="button"
+                                onClick={() => alert('جهت بازیابی رمز عبور سازمانی، به واحد IT مراجعه کنید.')}
+                                className={`text-[10px] hover:underline cursor-pointer font-bold transition-all ${orgRole === 'contractor' ? 'text-amber-600 hover:text-amber-700' : 'text-indigo-500 hover:text-indigo-700'}`}
+                            >
+                                فراموشی رمز؟
+                            </button>
+                        </div>
+                    }
+                    type="password"
+                    value={formData.password}
+                    onChange={e => updateField('password', e.target.value)}
+                />
                 {errors.password && <ErrorMsg msg={errors.password} />}
+
                 <CaptchaSection value={formData.captchaInput} code={captchaCode} onChange={v => updateField('captchaInput', v)} onRefresh={generateCaptcha} error={errors.captchaInput} />
                 <Button type="submit" disabled={isLoading} className={`w-full py-4 rounded-xl text-white font-black shadow-lg transition-all active:scale-95 cursor-pointer mt-4 disabled:opacity-60 ${orgRole === 'contractor' ? 'bg-amber-500 shadow-amber-200' : 'bg-indigo-600 shadow-indigo-200'}`}>
                     {isLoading ? 'در حال پردازش...' : 'تایید و ورود'}
@@ -207,7 +244,7 @@ function OrgForm({ orgRole, setOrgRole, formData, updateField, errors, captchaCo
             </form>
 
             <button onClick={toggleRole} className="mt-8 flex items-center justify-center gap-2 text-[10px] font-black text-slate-400 hover:text-blue-600 mx-auto py-2 px-4 rounded-xl hover:bg-slate-50 cursor-pointer transition-all border border-transparent">
-                <ArrowRightLeft size={14} /> بازگشت به ورود شهروندی
+                <ArrowRightLeft size={14} /> بازگشت به فرم ورود شهروند
             </button>
         </div>
     );
