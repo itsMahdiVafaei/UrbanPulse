@@ -265,21 +265,23 @@ class UserProfileView(APIView):
         user = request.user
         data = request.data
 
-        # ۱. آپدیت نام (اگر فرانت‌اند اسم رو یکپارچه می‌فرسته)
-        if 'name' in data:
+        # 1. آپدیت نام (پشتیبانی از فرمت‌های مختلف فرانت‌اند)
+        if 'headName' in data:
+            user.first_name = data['headName']
+        elif 'name' in data:
             name_parts = data['name'].split(' ', 1)
             user.first_name = name_parts[0]
             user.last_name = name_parts[1] if len(name_parts) > 1 else ''
-
-        # اگر فرانت‌اند اسم و فامیل رو جدا می‌فرسته:
-        if 'first_name' in data:
+        elif 'first_name' in data:
             user.first_name = data['first_name']
+
         if 'last_name' in data:
             user.last_name = data['last_name']
 
-        # ۲. آپدیت رمز عبور به صورت اصولی (هش شده)
-        if 'password' in data and data['password']:
-            user.set_password(data['password'])
+        # 2. آپدیت رمز عبور به صورت هش شده
+        password = data.get('password')
+        if password and password.strip():
+            user.set_password(password)
 
         user.save()
 
