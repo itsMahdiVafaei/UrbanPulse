@@ -42,8 +42,9 @@ export default function UserSettingsModal({ user, onClose }) {
         if (validate()) {
             setLoading(true);
             try {
+                // ارسال first_name به جای name برای تطابق با مدل دیتابیس جنگو
                 const payload = {
-                    name: formData.name,
+                    first_name: formData.name,
                     email: formData.email,
                 };
 
@@ -51,7 +52,6 @@ export default function UserSettingsModal({ user, onClose }) {
                     payload.password = formData.newPassword;
                 }
 
-                // اصلاح اسلش اول برای جلوگیری از خطای 404
                 await api.put('/profile/update/', payload);
 
                 const updatedData = {
@@ -66,7 +66,7 @@ export default function UserSettingsModal({ user, onClose }) {
                 alert("تغییرات با موفقیت در دیتابیس و حساب کاربری شما ثبت شد.");
                 onClose();
             } catch (err) {
-                console.error(err);
+                console.error("Profile update error details:", err);
                 alert(err.message || "خطایی در ارتباط با سرور رخ داد.");
             } finally {
                 setLoading(false);
