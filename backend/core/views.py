@@ -209,13 +209,17 @@ class ContractorViewSet(viewsets.ModelViewSet):
         if User.objects.filter(username=phone).exists():
             return Response({'detail': 'این شماره قبلاً ثبت شده است.'}, status=400)
 
+        full_name = data.get('headName') or data.get('first_name', '')
+        name_parts = full_name.split(' ', 1)
+
         # ساخت کاربر با نقش پیمانکار
         user = User.objects.create_user(
             username=phone,
             phone=phone,
-            password=data.get('password') or '12345678', # پسورد پیش‌فرض در صورت خالی بودن
+            password=data.get('password') or '12345678',
             role='contractor',
-            first_name=data.get('headName') or data.get('first_name', ''),
+            first_name=name_parts[0],                                       # تغییر کرد
+            last_name=name_parts[1] if len(name_parts) > 1 else '',         # اضافه شد
             email=data.get('email', ''),
             national_code=data.get('nationalCode') or data.get('national_code', ''),
             category=data.get('category', ''),
@@ -230,7 +234,10 @@ class ContractorViewSet(viewsets.ModelViewSet):
 
         # آپدیت فیلدها با پشتیبانی از هر دو نام‌گذاری (فرانت و بک)
         if 'headName' in data or 'first_name' in data:
-            user.first_name = data.get('headName') or data.get('first_name')
+            full_name = data.get('headName') or data.get('first_name')
+            name_parts = full_name.split(' ', 1)
+            user.first_name = name_parts[0]
+            user.last_name = name_parts[1] if len(name_parts) > 1 else ''
         if 'phone' in data:
             user.phone = data.get('phone')
             user.username = data.get('phone')

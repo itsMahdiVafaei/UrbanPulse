@@ -79,9 +79,18 @@ class ContractorSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='contractor_status', required=False)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
+    def to_representation(self, instance):
+        # این تابع موقع ارسال اطلاعات به فرانت‌اند اجرا میشه
+        data = super().to_representation(instance)
+        # نام و نام خانوادگی رو به هم می‌چسبونیم تا تو پنل ادمین کامل نشون داده بشه
+        data['headName'] = f"{instance.first_name} {instance.last_name}".strip()
+        return data
+
     class Meta:
         model = User
         fields = ['id', 'headName', 'nationalCode', 'phone', 'email', 'category', 'memberCount', 'status', 'password']
+
+
 
     def create(self, validated_data):
         password = validated_data.pop('password', None) or validated_data.get('phone')
