@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import {
-    X, Printer, User, Phone, Tag, Hash, Calendar,
+    X, User, Phone, Tag, Hash, Calendar,
     AlertCircle, XCircle, CheckCircle2, ShieldCheck, Download
 } from 'lucide-react';
 
@@ -18,21 +18,21 @@ export default function TicketDetailsModal({ ticket, onClose }) {
         setIsDownloading(true);
         try {
             const element = printRef.current;
-            // تنظیمات html2canvas برای کیفیت بالا
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff' // پس‌زمینه حتما سفید باشد
+
+            // استفاده از toPng به جای html2canvas
+            const dataUrl = await toPng(element, {
+                pixelRatio: 2, // معادل همون scale برای کیفیت عالی
+                backgroundColor: '#ffffff'
             });
-            const imgData = canvas.toDataURL('image/png');
 
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            // محاسبه ارتفاع متناسب با عرض A4
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-            // قرار دادن تصویر روی فایل PDF با کمی فاصله از بالا
-            pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+            // محاسبه دقیق ارتفاع بر اساس ابعاد اِلِمان
+            const pdfHeight = (element.offsetHeight * pdfWidth) / element.offsetWidth;
+
+            // قرار دادن تصویر روی فایل PDF
+            pdf.addImage(dataUrl, 'PNG', 0, 10, pdfWidth, pdfHeight);
 
             // دانلود فایل با نام هوشمند
             pdf.save(`Ticket_${ticket?.trackingCode || 'Report'}.pdf`);
