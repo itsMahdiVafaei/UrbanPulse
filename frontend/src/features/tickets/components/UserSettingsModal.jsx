@@ -4,6 +4,7 @@ import { updateUserProfile } from '../../auth/authSlice';
 import { updateCitizenProfile } from '../../admin/adminSlice';
 import { X, User, Mail, Phone, Lock, Save, AlertCircle } from 'lucide-react';
 import Input from '../../../components/ui/Input';
+import { updateProfileApi } from '../../../services/api';
 
 export default function UserSettingsModal({ user, onClose }) {
     const dispatch = useDispatch();
@@ -36,24 +37,37 @@ export default function UserSettingsModal({ user, onClose }) {
         return Object.keys(e).length === 0;
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
         if (validate()) {
             const updatedData = {
                 name: formData.name,
                 email: formData.email,
-                phone: formData.phone // شماره همراه به عنوان کلید یکتا ثابت می‌ماند
+                phone: formData.phone // فقط جهت نمایش، چون یوزرنیم تو بک‌اند آپدیت نمیشه مگر اینکه دسترسی بدی
             };
 
-            // ۱. به‌روزرسانی اطلاعات پروفایل جاری (برای هدر و سایدبار)
-            dispatch(updateUserProfile(updatedData));
+            // ارسال پسورد جدید در صورت وجود
+            if (formData.newPassword) {
+                updatedData.password = formData.newPassword;
+            }
 
-            // ۲. به‌روزرسانی اطلاعات در لیست کل شهروندان (برای پنل ادمین)
-            dispatch(updateCitizenProfile(updatedData));
+            try {
+                // ۱. ارسال درخواست به بک‌اند (جنگو)
+                const response = await updateProfileApi(updatedData);
 
-            alert("تغییرات با موفقیت در پروفایل و سوابق سیستمی شما ثبت شد.");
-            onClose(); // بستن مودال بعد از موفقیت
+                // ۲. آپدیت استیت‌های ریداکس (برای تغییر در لحظه‌ی ظاهر سایت)
+                // اگر بک‌اند دیتای جدید رو برگردونده، از اون استفاده کن
+                const newReduxData = { ...updatedData, name: response.name || updatedData.name };
+                dispatch(updateUserProfile(newReduxData));
+                dispatch(updateCitizenProfile(newReduxData));
+
+                alert("تغییرات با موفقیت در سیستم ثبت شد.");
+                onClose();
+            } catch (error) {
+                console.error("خطا:", error);
+                alert(error.message || "مشکلی در ذخیره اطلاعات پیش آمد. دوباره تلاش کنید.");
+            }
         }
     };
 

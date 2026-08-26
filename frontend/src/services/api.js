@@ -21,6 +21,7 @@ async function apiCall(path, options = {}) {
 // --- Auth ---
 export const login = (username, password) => apiCall('/auth/token/', { method: 'POST', body: JSON.stringify({ username, password }) });
 export const register = (data) => apiCall('/register/register/', { method: 'POST', body: JSON.stringify(data) });
+// --- User Profile ---
 
 // --- Requests (tickets) ---
 export const getRequests = () => apiCall('/requests/');
@@ -37,3 +38,5 @@ export const getContractors = () => apiCall('/contractors/');
 export const createContractorApi = (data) => apiCall('/contractors/', { method: 'POST', body: JSON.stringify(data) });
 export const updateContractorApi = (data) => apiCall(`/contractors/${data.id}/`, { method: 'PATCH', body: JSON.stringify(data) });
 export const deleteContractorApi = (id) => apiCall(`/contractors/${id}/`, { method: 'DELETE' });
+// --- User Profile ---
+export const updateProfileApi = (data) => apiCall('/profile/update/', { method: 'PUT', body: JSON.stringify(data) });
