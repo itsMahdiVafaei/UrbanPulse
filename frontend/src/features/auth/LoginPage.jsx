@@ -227,7 +227,7 @@ function OrgForm({ orgRole, setOrgRole, formData, updateField, errors, captchaCo
                                 onClick={() => alert('جهت بازیابی رمز عبور سازمانی، به واحد IT مراجعه کنید.')}
                                 className={`text-[10px] hover:underline cursor-pointer font-bold transition-all ${orgRole === 'contractor' ? 'text-amber-600 hover:text-amber-700' : 'text-indigo-500 hover:text-indigo-700'}`}
                             >
-                                فراموشی رمز؟
+                                رمز خود را فراموش کرده‌اید؟
                             </button>
                         </div>
                     }
