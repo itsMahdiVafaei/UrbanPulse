@@ -20,7 +20,6 @@ export default function UserSettingsModal({ user, onClose }) {
 
     const [errors, setErrors] = useState({});
 
-    // تابع اعتبارسنجی فول مهندسی
     const validate = () => {
         let e = {};
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,7 +43,7 @@ export default function UserSettingsModal({ user, onClose }) {
             const updatedData = {
                 name: formData.name,
                 email: formData.email,
-                phone: formData.phone // فقط جهت نمایش، چون یوزرنیم تو بک‌اند آپدیت نمیشه مگر اینکه دسترسی بدی
+                phone: formData.phone
             };
 
             // ارسال پسورد جدید در صورت وجود
@@ -56,8 +55,6 @@ export default function UserSettingsModal({ user, onClose }) {
                 // ۱. ارسال درخواست به بک‌اند (جنگو)
                 const response = await updateProfileApi(updatedData);
 
-                // ۲. آپدیت استیت‌های ریداکس (برای تغییر در لحظه‌ی ظاهر سایت)
-                // اگر بک‌اند دیتای جدید رو برگردونده، از اون استفاده کن
                 const newReduxData = { ...updatedData, name: response.name || updatedData.name };
                 dispatch(updateUserProfile(newReduxData));
                 dispatch(updateCitizenProfile(newReduxData));

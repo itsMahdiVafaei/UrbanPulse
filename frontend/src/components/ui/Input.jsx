@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function Input({ label, type = 'text', className = '', ...props }) {
-    // استیت برای مدیریت نمایش یا مخفی بودن پسورد
     const [showPassword, setShowPassword] = useState(false);
-
-    // اگر نوع فیلد پسورد است و کاربر روی چشم کلیک کرده، نوع فیلد را موقتاً به text تغییر بده
     const inputType = type === 'password' && showPassword ? 'text' : type;
 
     return (
@@ -20,7 +17,6 @@ export default function Input({ label, type = 'text', className = '', ...props }
             <div className="relative w-full">
                 <input
                     type={inputType}
-                    // اگر فیلد پسورد است، از سمت چپ پدینگ بیشتری می‌دهیم تا متن زیر آیکون چشم نرود (pl-11)
                     className={`w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-medium outline-none focus:border-indigo-500 transition-colors ${type === 'password' ? 'pl-11' : ''} ${className}`}
                     {...props}
                 />

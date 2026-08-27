@@ -65,7 +65,7 @@ export default function AdminTicketsTab() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* تنظیمات نمایش - استیت مورد علاقه شما */}
+                    {/* تنظیمات نمایش */}
                     <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-xs">
                         <span className="text-xs font-bold text-slate-400">نمایش:</span>
                         <select
@@ -131,7 +131,7 @@ export default function AdminTicketsTab() {
                 </div>
             )}
 
-            {/* Pagination: همیشه نمایش داده می‌شود، اگر <= 5 مورد باشد غیرفعال است */}
+            {/*  */}
             <div className={`flex flex-col sm:flex-row justify-center items-center gap-4 mt-8 bg-white w-full sm:w-fit mx-auto px-6 py-4 rounded-[2rem] border border-slate-200 shadow-sm transition-opacity ${!isPaginationEnabled ? 'opacity-50' : 'opacity-100'}`}>
                 <div className="flex items-center gap-4">
                     <button

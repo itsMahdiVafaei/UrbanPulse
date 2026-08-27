@@ -31,7 +31,7 @@ export default function ContractorFormModal({ onClose, onSave, initialData = nul
         if (initialData) {
             setFormData({
                 ...initialData,
-                // اگر بک‌اند لیست اعضا رو نمی‌فرسته، حداقل یک آرایه خالی بذار تا برنامه کرش نکنه
+
                 members: initialData.members || []
             });
         }
